@@ -1,0 +1,6 @@
+metric,value
+manual_unique_texts,5949.0
+synthetic_unique_texts,7991.0
+overlapping_texts,4169.0
+overlap_pct_of_manual,70.08
+overlap_pct_of_synthetic,52.17

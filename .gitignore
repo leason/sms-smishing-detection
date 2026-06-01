@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/*_executed*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
+
+# Processed data and outputs are regenerable but we include them for convenience
+# Uncomment these lines to exclude them:
+# data/processed/
+# data/splits/
+# outputs/

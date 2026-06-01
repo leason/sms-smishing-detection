@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Smishing Detector</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .subtitle { color: #666; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 100px; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; resize: vertical; }
+        textarea:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.2); }
+        button { background: #4a90d9; color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer; margin-top: 0.75rem; }
+        button:hover { background: #357abd; }
+        .samples { margin-top: 1rem; }
+        .samples summary { cursor: pointer; color: #4a90d9; font-size: 0.9rem; }
+        .sample-btn { display: block; background: #f0f4f8; border: 1px solid #ddd; border-radius: 4px; padding: 0.5rem 0.75rem; margin: 0.4rem 0; cursor: pointer; font-size: 0.85rem; text-align: left; width: 100%; }
+        .sample-btn:hover { background: #e4ebf2; }
+        .sample-label { font-weight: 600; font-size: 0.8rem; color: #666; }
+
+        .result { border-left: 4px solid #ccc; padding-left: 1rem; }
+        .result.ham { border-color: #27ae60; }
+        .result.spam { border-color: #f39c12; }
+        .result.smishing { border-color: #e74c3c; }
+        .prediction-label { font-size: 1.3rem; font-weight: 700; text-transform: uppercase; }
+        .prediction-label.ham { color: #27ae60; }
+        .prediction-label.spam { color: #f39c12; }
+        .prediction-label.smishing { color: #e74c3c; }
+        .confidence { color: #666; font-size: 0.9rem; margin-top: 0.25rem; }
+        .probabilities { display: flex; gap: 1rem; margin: 0.75rem 0; }
+        .prob { text-align: center; flex: 1; }
+        .prob-bar { height: 6px; border-radius: 3px; background: #eee; margin-top: 0.25rem; overflow: hidden; }
+        .prob-fill { height: 100%; border-radius: 3px; }
+        .prob-fill.ham { background: #27ae60; }
+        .prob-fill.spam { background: #f39c12; }
+        .prob-fill.smishing { background: #e74c3c; }
+        .original-msg { background: #f8f9fa; padding: 0.75rem; border-radius: 4px; font-size: 0.9rem; margin: 0.75rem 0; word-break: break-word; }
+        .indicators { margin-top: 0.75rem; }
+        .indicator { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; margin: 0.15rem; }
+        .indicator.active { background: #fde8e8; color: #c0392b; }
+        .indicator.inactive { background: #eee; color: #999; }
+        .keywords { margin-top: 0.5rem; font-size: 0.85rem; color: #666; }
+        .heuristic-note { font-size: 0.8rem; color: #999; margin-top: 0.75rem; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMS Smishing Detector</h1>
+        <p class="subtitle">Paste an SMS message to classify it as ham, spam, or smishing.</p>
+
+        <div class="card">
+            <form method="post" action="/predict">
+                <textarea name="message" placeholder="Paste an SMS message here...">{% if result %}{{ result.message }}{% endif %}</textarea>
+                <button type="submit">Analyze Message</button>
+            </form>
+
+            <details class="samples">
+                <summary>Try a sample message</summary>
+                {% for sample in sample_messages %}
+                <form method="post" action="/predict" style="display:inline;">
+                    <input type="hidden" name="message" value="{{ sample.text }}">
+                    <button type="submit" class="sample-btn">
+                        <span class="sample-label">{{ sample.label }}:</span> {{ sample.text[:80] }}{% if sample.text|length > 80 %}...{% endif %}
+                    </button>
+                </form>
+                {% endfor %}
+            </details>
+        </div>
+
+        {% if result %}
+        <div class="card result {{ result.prediction }}">
+            <span class="prediction-label {{ result.prediction }}">{{ result.prediction }}</span>
+            {% if result.confidence %}
+            <div class="confidence">Confidence: {{ (result.confidence * 100)|round(1) }}%</div>
+            {% endif %}
+
+            {% if result.probabilities %}
+            <div class="probabilities">
+                {% for label in ['ham', 'spam', 'smishing'] if label in result.probabilities %}
+                <div class="prob">
+                    <div style="font-size:0.8rem; color:#666;">{{ label }}</div>
+                    <div style="font-weight:600;">{{ (result.probabilities[label] * 100)|round(1) }}%</div>
+                    <div class="prob-bar"><div class="prob-fill {{ label }}" style="width:{{ result.probabilities[label] * 100 }}%"></div></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="original-msg">{{ result.message }}</div>
+
+            <div class="indicators">
+                <span class="indicator {{ 'active' if result.indicators.has_url else 'inactive' }}">
+                    {{ '🔗' if result.indicators.has_url else '—' }} URL
+                </span>
+                <span class="indicator {{ 'active' if result.indicators.has_email else 'inactive' }}">
+                    {{ '📧' if result.indicators.has_email else '—' }} Email
+                </span>
+                <span class="indicator {{ 'active' if result.indicators.has_phone else 'inactive' }}">
+                    {{ '📞' if result.indicators.has_phone else '—' }} Phone
+                </span>
+            </div>
+
+            {% if result.indicators.suspicious_keywords %}
+            <div class="keywords">
+                Suspicious keywords: {{ result.indicators.suspicious_keywords|join(', ') }}
+            </div>
+            {% endif %}
+
+            <div class="heuristic-note">
+                Indicators are heuristic signals, not proof of malicious intent. The classification is based on a machine learning model trained on SMS datasets.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+    // Auto-resize textarea
+    document.querySelector('textarea').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+    </script>
+</body>
+</html>

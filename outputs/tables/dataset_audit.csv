@@ -1,0 +1,3 @@
+dataset,row_count,ham_count,spam_count,smishing_count,exact_duplicate_count,duplicate_pct,avg_message_length,vocabulary_size
+manual,5949,4834,487,628,0,0.0,83.0,14883
+synthetic,7991,3393,1944,2654,0,0.0,112.6,12228

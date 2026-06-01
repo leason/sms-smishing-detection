@@ -1,0 +1,13 @@
+{
+  "model_name": "LinearSVC",
+  "training_experiment": "combined",
+  "primary_metric": "smishing_f1",
+  "mean_smishing_f1": 0.9393,
+  "mean_macro_f1": 0.949,
+  "labels": [
+    "ham",
+    "spam",
+    "smishing"
+  ],
+  "trained_at": "2026-06-01T20:29:26.706916+00:00"
+}
