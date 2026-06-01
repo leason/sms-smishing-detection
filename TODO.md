@@ -134,6 +134,42 @@
 
 ---
 
+## Workstream 4: iOS App (Stretch Goal)
+
+### 4A. Research Spike
+- [x] Test coremltools conversion — BLOCKED (requires sklearn ≤1.5.1)
+- [x] Evaluate simplified models (5k, 10k features) — 5k loses <1% F1
+- [x] Choose approach: Swift-native TF-IDF + exported weights (Option D)
+- [x] Export model weights as JSON (489 KB)
+- [x] Generate Python reference predictions for parity testing
+
+### 4B. Swift Classifier (`ios/SMSShield/Shared/`)
+- [x] SMSClassifier.swift — TF-IDF + LogReg inference in Swift
+- [x] FilteredMessage.swift — data model for logged messages
+- [x] MessageStore.swift — App Group JSON persistence
+- [x] IndicatorDetector.swift — URL/email/phone/keyword detection
+
+### 4C. Message Filter Extension
+- [x] MessageFilterExtension.swift — ILMessageFilterExtension implementation
+- [x] Info.plist — extension configuration
+- [ ] Verify Swift classifier matches Python predictions (parity test)
+
+### 4D. Companion App (SwiftUI)
+- [x] ContentView.swift — tab navigation
+- [x] MessageListView.swift — filtered message list with filter by class
+- [x] MessageDetailView.swift — detail view with indicators and keywords
+- [x] TestClassifierView.swift — interactive classifier testing UI
+- [x] SettingsView.swift — about, setup instructions, privacy info
+
+### 4E. Xcode Project Setup
+- [ ] Create Xcode project with two targets (app + extension)
+- [ ] Configure App Group entitlement (group.com.leason.smsshield)
+- [ ] Add shared files to both targets
+- [ ] Build on physical device
+- [ ] Test message filtering with real SMS
+
+---
+
 ## Open Questions / Decisions
 - (none yet)
 

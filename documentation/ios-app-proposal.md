@@ -139,9 +139,15 @@ Skip ML entirely; implement a rule-based classifier in Swift.
 - Score messages based on: URL presence, suspicious keywords, phone number patterns, urgency indicators
 - Threshold-based classification
 
-### Recommendation
+### Recommendation — DECIDED
 
-Try **Option A** first with a feasibility spike. If the converted model is too large for the extension's memory limit, fall back to **Option B** (Create ML). Option C works as a minimum viable prototype.
+**Option D (Swift-native TF-IDF + exported weights)** was selected after the feasibility spike.
+
+Spike findings:
+- Option A blocked: `coremltools` sklearn converter requires sklearn ≤1.5.1; we have 1.8.0
+- Option D validated: a simplified 5k-feature LogisticRegression model loses <1% smishing F1 vs the full pipeline (0.945 vs 0.953), weighs only 489 KB as JSON, and inference is ~100 lines of Swift
+
+Implementation is complete in `ios/SMSShield/`. See `ios/README.md` for Xcode setup instructions.
 
 ## Development Plan
 
