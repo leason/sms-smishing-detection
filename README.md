@@ -96,6 +96,7 @@ docker compose down
 ├── requirements.txt             # Python dependencies
 ├── Dockerfile
 ├── docker-compose.yml
+├── documentation/               # Technical docs (architecture, pipeline, etc.)
 ├── data/
 │   ├── raw/                     # Source CSV files
 │   └── processed/               # Cleaned datasets
@@ -135,6 +136,18 @@ docker compose down
 | Tables | `dataset_audit.csv`, `leakage_audit.csv`, `statistical_tests.csv`, `effect_sizes.csv` |
 | Figures | Class balance, duplicate rates, overlap, F1 comparisons, confusion matrices, boxplots |
 | Model | `best_model.joblib` (LinearSVC combined, F1=0.939), `best_model_metadata.json` |
+
+## Documentation
+
+See the [`documentation/`](documentation/) folder for detailed technical docs:
+
+- **[architecture.md](documentation/architecture.md)** — system design, module dependencies, data flow
+- **[data-pipeline.md](documentation/data-pipeline.md)** — preprocessing, audit, overlap analysis
+- **[model-training.md](documentation/model-training.md)** — features, classifiers, experimental design
+- **[statistical-analysis.md](documentation/statistical-analysis.md)** — R hypothesis tests and effect sizes
+- **[demo-app.md](documentation/demo-app.md)** — FastAPI endpoints, Docker, prediction flow
+- **[outputs-reference.md](documentation/outputs-reference.md)** — complete file catalog with schemas
+- **[ios-app-proposal.md](documentation/ios-app-proposal.md)** — iOS SMS filtering feasibility study
 
 ## Limitations
 
