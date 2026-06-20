@@ -1,7 +1,6 @@
 {
   "model_name": "LinearSVC",
   "training_experiment": "combined",
-  "duplicate_mode": "drop_exact_duplicates",
   "primary_metric": "smishing_f1",
   "mean_smishing_f1": 0.9393,
   "mean_macro_f1": 0.949,
@@ -10,5 +9,5 @@
     "spam",
     "smishing"
   ],
-  "trained_at": "2026-06-19T13:11:42.330033+00:00"
+  "trained_at": "2026-06-01T20:29:26.706916+00:00"
 }

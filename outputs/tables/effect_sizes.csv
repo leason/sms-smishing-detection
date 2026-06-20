@@ -1,13 +1,13 @@
-comparison,metric,model_name,cohens_d,cohens_d_magnitude,wilcoxon_r
-manual_only vs synthetic_only,smishing_f1,MultinomialNB,1.6806324256575425,large,0.8374202620088588
-manual_only vs synthetic_only,smishing_f1,LogisticRegression,1.5986703185337696,large,0.8223992707620634
-manual_only vs synthetic_only,smishing_f1,LinearSVC,2.94554264517828,large,0.8712174923141492
-manual_only vs synthetic_only,smishing_f1,ALL,1.7540881143335154,large,0.8525094174745542
-manual_only vs combined,smishing_f1,MultinomialNB,2.508518300593772,large,0.8712174923141492
-manual_only vs combined,smishing_f1,LogisticRegression,2.7455772104721787,large,0.8712174923141492
-manual_only vs combined,smishing_f1,LinearSVC,3.428224680245212,large,0.8712174923141492
-manual_only vs combined,smishing_f1,ALL,2.646387563052861,large,0.8682023769007028
-synthetic_only vs combined,smishing_f1,MultinomialNB,1.0185635775181254,large,0.83366501419716
-synthetic_only vs combined,smishing_f1,LogisticRegression,1.5095837267100818,large,0.8712174923141492
-synthetic_only vs combined,smishing_f1,LinearSVC,0.6347472971026357,medium,0.6513933274875219
-synthetic_only vs combined,smishing_f1,ALL,0.775455959889448,medium,0.8064606827307101
+comparison,exp_a,exp_b,model_name,cohens_d,cohens_d_magnitude,wilcoxon_r
+manual_only vs synthetic_only,manual_only,synthetic_only,MultinomialNB,2.3204122004817194,large,0.8712174923141492
+manual_only vs synthetic_only,manual_only,synthetic_only,LogisticRegression,1.8979962349197201,large,0.8336870580385165
+manual_only vs synthetic_only,manual_only,synthetic_only,LinearSVC,3.200660151469935,large,0.8712174923141492
+manual_only vs synthetic_only,manual_only,synthetic_only,ALL,2.1804812984246458,large,0.8618412384024269
+manual_only vs combined,manual_only,combined,MultinomialNB,2.508518300593772,large,0.8712174923141492
+manual_only vs combined,manual_only,combined,LogisticRegression,2.7455772104721787,large,0.8712174923141492
+manual_only vs combined,manual_only,combined,LinearSVC,3.428224680245212,large,0.8712174923141492
+manual_only vs combined,manual_only,combined,ALL,2.646387563052861,large,0.8682023769007028
+synthetic_only vs combined,synthetic_only,combined,MultinomialNB,0.34499578607311215,small,0.6316564146003582
+synthetic_only vs combined,synthetic_only,combined,LogisticRegression,1.180015478274157,large,0.8223992707620634
+synthetic_only vs combined,synthetic_only,combined,LinearSVC,0.4132811491782631,small,0.5132189852931991
+synthetic_only vs combined,synthetic_only,combined,ALL,0.4916091656259828,small,0.6738033530873604
