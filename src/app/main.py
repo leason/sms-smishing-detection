@@ -19,7 +19,8 @@ app = FastAPI(title="SMS Smishing Detector")
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-MODEL_PATH = Path(__file__).resolve().parents[2] / "outputs" / "models" / "best_model.joblib"
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+MODEL_PATH = _PROJECT_ROOT / "outputs" / "models" / "best_model.joblib"
 META_PATH = MODEL_PATH.parent / "best_model_metadata.json"
 
 model = None
@@ -85,6 +86,7 @@ async def home(request: Request):
     return templates.TemplateResponse(request, "index.html", {
         "sample_messages": SAMPLE_MESSAGES,
         "result": None,
+        "metadata": metadata,
     })
 
 
@@ -94,6 +96,7 @@ async def predict_form(request: Request, message: str = Form(...)):
     return templates.TemplateResponse(request, "index.html", {
         "sample_messages": SAMPLE_MESSAGES,
         "result": result,
+        "metadata": metadata,
     })
 
 
@@ -109,3 +112,11 @@ async def predict_api(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "ok", "model_loaded": model is not None}
+
+
+@app.get("/api/model")
+async def model_info():
+    """Return deployed-model metadata so callers can audit which model is live."""
+    if metadata is None:
+        return JSONResponse({"error": "no metadata loaded"}, status_code=503)
+    return JSONResponse(metadata)

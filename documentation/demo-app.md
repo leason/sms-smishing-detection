@@ -6,6 +6,17 @@
 
 A locally-deployed web application that lets users paste SMS messages and receive classification predictions (ham/spam/smishing) using the best trained model.
 
+## Deployed Model
+
+The app loads the best model from:
+
+```
+outputs/models/best_model.joblib
+outputs/models/best_model_metadata.json
+```
+
+This is the LinearSVC + combined model (mean smishing F1 = 0.939; mean macro F1 = 0.949 across 30 seeds; deployed instance trained on seed=1). The metadata is exposed via the `/api/model` endpoint and shown as a small info footer on the index page.
+
 ## Stack
 
 | Component | Technology |
@@ -57,6 +68,10 @@ JSON API endpoint.
 ### `GET /health`
 
 Returns `{"status": "ok", "model_loaded": true}`.
+
+### `GET /api/model`
+
+Returns the deployed model's metadata (model_name, training_experiment, duplicate_mode, mean smishing/macro F1, label order, trained_at timestamp). Useful for auditing which model is live without inspecting the container.
 
 ## Prediction Flow
 
@@ -121,10 +136,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./outputs/models:/app/outputs/models
+      - ./outputs/models:/app/outputs/models:ro
 ```
 
-The volume mount allows updating the model without rebuilding the image.
+The volume mount is read-only and lets a fresh `best_model.joblib` be picked up by restarting the container without rebuilding the image.
 
 ### Commands
 

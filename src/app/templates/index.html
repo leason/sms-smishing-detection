@@ -44,6 +44,8 @@
         .indicator.inactive { background: #eee; color: #999; }
         .keywords { margin-top: 0.5rem; font-size: 0.85rem; color: #666; }
         .heuristic-note { font-size: 0.8rem; color: #999; margin-top: 0.75rem; font-style: italic; }
+        .model-info { font-size: 0.75rem; color: #888; margin-top: 1.5rem; padding: 0.75rem; background: #fafbfc; border-radius: 6px; border: 1px solid #eef0f3; }
+        .model-info strong { color: #555; }
     </style>
 </head>
 <body>
@@ -112,6 +114,16 @@
             <div class="heuristic-note">
                 Indicators are heuristic signals, not proof of malicious intent. The classification is based on a machine learning model trained on SMS datasets.
             </div>
+        </div>
+        {% endif %}
+
+        {% if metadata %}
+        <div class="model-info">
+            <strong>Deployed model:</strong>
+            {{ metadata.model_name }} trained on the <code>{{ metadata.training_experiment }}</code> strategy
+            {% if metadata.duplicate_mode %} under the <code>{{ metadata.duplicate_mode }}</code> preprocessing protocol{% endif %}.
+            Mean smishing F1 = {{ metadata.mean_smishing_f1 }};
+            mean macro F1 = {{ metadata.mean_macro_f1 }} (30 random seeds, manual holdout).
         </div>
         {% endif %}
     </div>

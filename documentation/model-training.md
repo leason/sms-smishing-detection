@@ -51,26 +51,28 @@ Defined in `MODELS` dict in `src/models/train.py`:
 | Name | Class | Configuration |
 |------|-------|---------------|
 | MultinomialNB | `MultinomialNB()` | Default params |
-| LogisticRegression | `LogisticRegression(max_iter=2000, class_weight="balanced")` | Balanced class weights, increased iterations |
+| LogisticRegression | `LogisticRegression(max_iter=2000, class_weight="balanced")` | Balanced class weights |
 | LinearSVC | `CalibratedClassifierCV(LinearSVC(class_weight="balanced", max_iter=2000))` | Balanced weights, wrapped for probability support |
 
 LinearSVC is wrapped in `CalibratedClassifierCV` so the saved model supports `predict_proba()`, which the demo app uses for confidence scores.
 
 ## Experimental Design
 
+### Training strategies
+
+Three strategies, all evaluated against the manual real-world holdout:
+
+| Strategy | Training data |
+|----------|---------------|
+| `manual_only` | Manual train split |
+| `synthetic_only` | Synthetic train split (full natural volume, no downsampling) |
+| `combined` | Manual train + synthetic train (concatenated) |
+
+The synthetic_only strategy uses the **full** natural-volume synthetic training split. No size-matching is applied — volume is a core advantage of LLM-generated data and matching away that advantage would conceal what the comparison is measuring.
+
 ### Seeds
 
 30 random seeds (1–30). Each seed produces deterministic train/test splits and model initialization.
-
-### Training Strategies
-
-All experiments evaluate against the **Manual Holdout** (real-world SMS):
-
-| Experiment ID | Training Data | Test Data | Purpose |
-|---|---|---|---|
-| `manual_only` | Manual train split | Manual holdout | Baseline: real data on real data |
-| `synthetic_only` | Synthetic train split (size-matched) | Manual holdout | Can synthetic data detect real smishing? |
-| `combined` | Manual train + full synthetic train | Manual holdout | Does adding synthetic data help? |
 
 ### Train/Test Splitting
 
@@ -78,37 +80,29 @@ All experiments evaluate against the **Manual Holdout** (real-world SMS):
 
 1. Stratified 80/20 split on manual dataset (preserves class proportions)
 2. Stratified 80/20 split on synthetic dataset
-3. Manual holdout is the test set for all three experiments within a seed
+3. Manual holdout is the test set for all three strategies within a seed
 
 ```python
 train_test_split(df, test_size=0.20, stratify=df["label"], random_state=seed)
 ```
 
-### Size-Matching Control
+### Typical split sizes (per seed)
 
-The synthetic dataset (~10k rows) is larger than the manual dataset (~6k rows). To ensure `manual_only` vs `synthetic_only` comparisons reflect data source differences (not training set size), the `synthetic_only` experiment downsamples:
+| Strategy | n_train | of which ham | spam | smishing |
+|----------|--------:|-------------:|-----:|---------:|
+| manual_only | 4,759 | 3,867 | 390 | 502 |
+| synthetic_only | 6,392 | 2,714 | 1,555 | 2,123 |
+| combined | 11,151 | 6,581 | 1,945 | 2,625 |
 
-1. Compute size of manual training split (e.g., 4,759 rows)
-2. Stratified random sample from synthetic training split to match that size
-3. Same seed used for reproducibility
-
-The `combined` experiment uses the **full** synthetic training split concatenated with the manual training split.
-
-### Typical Split Sizes
-
-| Experiment | n_train | n_test |
-|------------|--------:|-------:|
-| manual_only | ~4,759 | ~1,190 |
-| synthetic_only | ~4,759 (matched) | ~1,190 |
-| combined | ~11,151 | ~1,190 |
+Manual holdout (test): ~1,190 rows across all strategies. Full per-seed composition is in `outputs/metrics/train_composition.csv`.
 
 ## Training Loop
 
-`run_experiments()` iterates: seeds x models x experiments = 30 x 3 x 3 = **270 runs**.
+`run_experiments()` iterates: seeds × models × strategies = 30 × 3 × 3 = **270 runs**.
 
 For each run:
 1. Create splits for the seed
-2. Get train/test data for the experiment
+2. Get train/test data for the strategy
 3. Build pipeline with the classifier
 4. `pipeline.fit(train_df, train_df["label"])`
 5. `pipeline.predict(test_df)`
@@ -126,24 +120,32 @@ After all runs: save metrics, generate summary tables, select and save best mode
 3. Sort by smishing_f1 descending, macro_f1 as tiebreaker
 4. Winner is retrained on seed=1 training split and serialized
 
-### Current Best Model
+### Current best model
 
 - **LinearSVC + combined** training strategy
 - Mean smishing F1: 0.939
 - Mean macro F1: 0.949
-- Saved to: `outputs/models/best_model.joblib` (4.9 MB)
-- Metadata: `outputs/models/best_model_metadata.json`
+- Saved to: `outputs/models/best_model.joblib`
+- Metadata: `outputs/models/best_model_metadata.json` (includes `duplicate_mode`, `training_experiment`, headline metrics, trained_at)
 
-### Model Class Order
+This is the model deployed by the FastAPI demo app.
+
+### Model class order
 
 The fitted model's `.classes_` attribute is `['ham', 'smishing', 'spam']` (alphabetical). This is important for interpreting `predict_proba()` output — the app uses `model.classes_` to align probabilities with labels.
 
 ## Results Summary
 
-| Model | manual_only | synthetic_only | combined |
-|-------|-------------|----------------|----------|
-| LinearSVC | 0.870 (0.023) | 0.930 (0.016) | 0.939 (0.015) |
-| LogisticRegression | 0.868 (0.023) | 0.900 (0.016) | 0.925 (0.017) |
-| MultinomialNB | 0.857 (0.019) | 0.887 (0.016) | 0.906 (0.020) |
+Mean smishing F1 (std) across 30 seeds:
 
-*Mean smishing F1 (std dev) across 30 seeds.*
+| Model | manual_only | synthetic_only | combined |
+|-------|------------:|---------------:|---------:|
+| Multinomial NB | 0.857 (0.019) | 0.900 (0.017) | 0.906 (0.020) |
+| Logistic Regression | 0.868 (0.023) | 0.905 (0.016) | 0.925 (0.017) |
+| LinearSVC | 0.870 (0.023) | 0.933 (0.015) | **0.939** (0.015) |
+
+Mean macro F1 follows the same pattern (LinearSVC combined: 0.949). Full tables in `outputs/tables/model_performance_summary.csv` and `outputs/tables/experiment_performance_summary.csv`.
+
+## Notes on framing
+
+This comparison embraces the natural training-data volume produced by each pipeline rather than artificially controlling for size. The cross-dataset text overlap (specifically the 100% ham copy from manual into synthetic) is reported as a structural property of the synthetic corpus in the data-pipeline documentation, and the results are interpreted accordingly: the headline numbers describe practical performance on a holdout of the manual corpus, not generalization to unseen-content distributions. See the README's "Scope of the claim" bullet for details.

@@ -80,6 +80,20 @@ Long-format confusion matrices. 270 runs x 9 cells = 2,430 rows.
 }
 ```
 
+### train_composition.csv
+
+90 rows (30 seeds × 3 strategies). Records per-class training set sizes for each (seed, strategy).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `seed` | int | Random seed |
+| `duplicate_mode` | string | Preprocessing mode used |
+| `experiment_id` | string | Training strategy |
+| `n_train` | int | Total training rows |
+| `n_ham` | int | Ham examples in training |
+| `n_spam` | int | Spam examples in training |
+| `n_smishing` | int | Smishing examples in training |
+
 ---
 
 ## outputs/tables/
@@ -124,16 +138,18 @@ Long-format confusion matrices. 270 runs x 9 cells = 2,430 rows.
 
 | File | Description |
 |------|-------------|
-| `mean_smishing_f1_by_training_strategy.png` | Grouped bar chart of mean smishing F1 |
-| `mean_macro_f1_by_training_strategy.png` | Grouped bar chart of mean macro F1 |
+| `mean_smishing_f1_by_training_strategy.png` (+ `_data.csv`) | Grouped bar chart of mean smishing F1 |
+| `mean_macro_f1_by_training_strategy.png` (+ `_data.csv`) | Grouped bar chart of mean macro F1 |
 | `confusion_matrix_best_model_manual_holdout.png` | Confusion matrix for best model on manual holdout (seed=1) |
-| `smishing_f1_boxplot_by_training_strategy.png` | Boxplot showing F1 variance across seeds |
+| `smishing_f1_boxplot_by_training_strategy.png` (+ `_data.csv`) | Boxplot showing F1 variance across seeds |
 
 ### Statistical Figures (from `r/statistical_analysis.R`)
 
 | File | Description |
 |------|-------------|
-| `statistical_comparison_boxplots.png` | ggplot2 boxplot of smishing F1 by strategy and model |
+| `statistical_comparison_boxplots.png` (+ `_data.csv`) | ggplot2 boxplot of smishing F1 by strategy and model |
+
+Each PNG figure has a `_data.csv` sidecar containing its source data so visuals can be regenerated in any tool.
 
 ---
 
@@ -141,8 +157,8 @@ Long-format confusion matrices. 270 runs x 9 cells = 2,430 rows.
 
 | File | Size | Description |
 |------|------|-------------|
-| `best_model.joblib` | ~4.9 MB | Serialized scikit-learn Pipeline (TF-IDF + indicators + CalibratedClassifierCV(LinearSVC)). Trained on combined data, seed=1. |
-| `best_model_metadata.json` | <1 KB | Model name, experiment, mean metrics, labels, timestamp |
+| `best_model.joblib` | ~2.9 MB | Serialized scikit-learn Pipeline (TF-IDF + indicators + CalibratedClassifierCV(LinearSVC)). Trained on combined data, seed=1. |
+| `best_model_metadata.json` | <1 KB | Model name, experiment, preprocessing mode, mean metrics, labels, timestamp |
 
 ### Metadata Schema
 
@@ -150,10 +166,17 @@ Long-format confusion matrices. 270 runs x 9 cells = 2,430 rows.
 {
   "model_name": "LinearSVC",
   "training_experiment": "combined",
+  "duplicate_mode": "drop_exact_duplicates",
   "primary_metric": "smishing_f1",
   "mean_smishing_f1": 0.9393,
   "mean_macro_f1": 0.949,
   "labels": ["ham", "spam", "smishing"],
-  "trained_at": "2026-06-01T20:29:26.706916+00:00"
+  "trained_at": "2026-06-19T12:51:41.218983+00:00"
 }
 ```
+
+---
+
+## outputs/runs/drop_exact_duplicates_original/
+
+Frozen snapshot of the project's initial training pass, preserved as historical record. Same structure as `outputs/` above (figures/, metrics/, models/, tables/). Not used by any active workflow.

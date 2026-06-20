@@ -4,7 +4,7 @@
 
 ## Purpose
 
-The R script performs formal hypothesis testing to determine whether differences in smishing detection performance across training strategies are statistically significant and practically meaningful.
+Formal hypothesis testing on the per-seed metrics from the training matrix. Determines whether differences between training strategies are statistically significant and practically meaningful.
 
 ## Input
 
@@ -12,7 +12,7 @@ The R script performs formal hypothesis testing to determine whether differences
 outputs/metrics/all_model_results.csv
 ```
 
-270 rows (30 seeds x 3 models x 3 experiments), each with per-run metrics.
+270 rows (30 seeds × 3 models × 3 strategies), each with per-run metrics including `smishing_f1`.
 
 ## Dependencies
 
@@ -21,77 +21,76 @@ outputs/metrics/all_model_results.csv
 | `tidyverse` | Data manipulation and plotting |
 | `effsize` | Cohen's d effect size calculation |
 
-Base R provides `t.test()`, `wilcox.test()`, `shapiro.test()`, and `p.adjust()`.
+Base R provides `t.test()`, `wilcox.test()`, `shapiro.test()`, `p.adjust()`.
 
 ## Comparisons
 
 Three pairwise comparisons, each run per-model and pooled across all models:
 
 | Comparison | Question |
-|------------|----------|
-| `manual_only` vs `synthetic_only` | Does training data source matter? |
-| `manual_only` vs `combined` | Does adding synthetic data help? |
-| `synthetic_only` vs `combined` | Does adding real data help? |
+|-----------|---------|
+| `manual_only` vs `synthetic_only` | Does training source matter? |
+| `manual_only` vs `combined` | Does adding synthetic data help over manual? |
+| `synthetic_only` vs `combined` | Does adding real data help over synthetic? |
+
+12 test rows total: 3 comparisons × (3 classifiers + 1 pooled).
 
 ## Test Selection
 
 For each comparison:
 
-1. Compute paired differences (paired by seed + model_name)
-2. Run Shapiro-Wilk normality test on differences
-3. If p > 0.05: use **paired t-test** (parametric)
-4. If p <= 0.05: use **Wilcoxon signed-rank test** (non-parametric)
-5. All tests are **two-tailed**
-
-In practice, 11 of 12 comparisons used paired t-tests; only LinearSVC manual_only vs synthetic_only used Wilcoxon.
+1. Compute paired differences (paired by `seed`; for pooled-ALL rows, paired by `seed × model_name`).
+2. Shapiro-Wilk normality test on the differences.
+3. If p > 0.05: paired t-test (parametric).
+4. Otherwise: Wilcoxon signed-rank (non-parametric).
+5. All tests are two-tailed.
 
 ## Multiple Comparison Correction
 
-**Benjamini-Hochberg FDR correction** applied across all 12 tests (3 comparisons x 4 groupings: 3 per-model + 1 pooled).
+**Benjamini-Hochberg FDR correction** is applied across all 12 tests.
 
 ## Effect Sizes
 
-| Metric | When Used |
-|--------|-----------|
-| Cohen's d (paired) | Always computed via `effsize::cohen.d(b, a, paired=TRUE)` |
-| Wilcoxon r | Always computed as `|Z| / sqrt(N)` where Z is derived from the Wilcoxon p-value |
+| Metric | Computation |
+|--------|-------------|
+| Cohen's d (paired) | `effsize::cohen.d(b, a, paired=TRUE)` |
+| Wilcoxon r | `|Z| / sqrt(N)` derived from Wilcoxon p-value |
 
-### Interpretation Scale (Cohen's d)
+### Interpretation scale (Cohen's d)
 
-| d | Magnitude |
-|---|-----------|
+| \|d\| | Magnitude |
+|-------|-----------|
 | < 0.2 | Negligible |
 | 0.2–0.5 | Small |
 | 0.5–0.8 | Medium |
-| > 0.8 | Large |
+| ≥ 0.8 | Large |
 
 ## Results
 
-All 12 comparisons are statistically significant (BH-adjusted p < 0.05).
+Pooled across the three classifiers (smishing F1):
 
-### Key Findings
+| Comparison | Mean Δ | Adj. p | Cohen's d |
+|-----------|-------:|-------:|----------:|
+| `manual_only` vs `synthetic_only` | +0.045 | < 10⁻³⁰ | 2.18 (large) |
+| `manual_only` vs `combined` | +0.058 | < 10⁻⁴⁰ | 2.65 (large) |
+| `synthetic_only` vs `combined` | +0.011 | < 10⁻¹⁰ | 0.49 (small) |
 
-**manual_only vs synthetic_only:**
-- Synthetic outperforms manual by 3–6 percentage points in smishing F1
-- Effect sizes: large (Cohen's d 1.6–2.9)
-- Even with size-matched training data, synthetic data trains better smishing detectors
+All 12 tests (3 comparisons × 4 groupings) are statistically significant after BH correction. Per-classifier breakdowns and exact statistics are in `outputs/tables/statistical_tests.csv` and `outputs/tables/effect_sizes.csv`.
 
-**manual_only vs combined:**
-- Combined outperforms manual by 5–7 percentage points
-- Effect sizes: large (d 2.5–3.4)
+### Reading these results
 
-**synthetic_only vs combined:**
-- Combined outperforms synthetic-only by 1–2.5 percentage points
-- Effect sizes: medium to large (d 0.6–1.5)
-- Adding real data on top of synthetic still helps, but the marginal gain is smaller
+- **The largest effect is between manual_only and either synthetic-using strategy.** This tells us that the manual corpus alone is meaningfully behind anything that uses synthetic data, with consistently large effect sizes across all three classifiers.
+- **The `synthetic_only` vs `combined` comparison is a small effect for LinearSVC and Multinomial NB but large for Logistic Regression.** Adding real ham/spam/smishing on top of the synthetic corpus helps Logistic Regression noticeably; for the other classifiers the marginal gain is small. All differences remain statistically significant.
+- **Manual_only baseline is the same across all comparisons** because manual data is unchanged regardless of which alternative it's compared against. This serves as an internal consistency check.
 
 ## Output Files
 
 | File | Content |
 |------|---------|
-| `outputs/tables/statistical_tests.csv` | All test results with columns: comparison, metric, model_name, test_type, n_pairs, mean_difference, median_difference, statistic, p_value, normality_p, p_value_adjusted, significant_at_0_05 |
-| `outputs/tables/effect_sizes.csv` | Effect sizes with columns: comparison, metric, model_name, cohens_d, cohens_d_magnitude, wilcoxon_r |
-| `outputs/figures/statistical_comparison_boxplots.png` | ggplot2 boxplot of smishing F1 by training strategy, grouped by model |
+| `outputs/tables/statistical_tests.csv` | All test results: comparison, model, test_type, n_pairs, mean_difference, statistic, p_value, normality_p, p_value_adjusted, significant_at_0_05 |
+| `outputs/tables/effect_sizes.csv` | comparison, model, cohens_d, cohens_d_magnitude, wilcoxon_r |
+| `outputs/figures/statistical_comparison_boxplots.png` | ggplot2 boxplot of smishing F1 by strategy, grouped by classifier |
+| `outputs/figures/statistical_comparison_boxplots_data.csv` | Source data for the boxplot |
 
 ## Running
 
@@ -99,4 +98,4 @@ All 12 comparisons are statistically significant (BH-adjusted p < 0.05).
 Rscript r/statistical_analysis.R
 ```
 
-Prints results to console and saves all output files. Takes a few seconds.
+Prints a summary and saves all output files. Takes a few seconds.

@@ -4,4 +4,4 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./outputs/models:/app/outputs/models
+      - ./outputs/models:/app/outputs/models:ro
