@@ -180,3 +180,9 @@ Each PNG figure has a `_data.csv` sidecar containing its source data so visuals 
 ## outputs/runs/drop_exact_duplicates_original/
 
 Frozen snapshot of the project's initial training pass, preserved as historical record. Same structure as `outputs/` above (figures/, metrics/, models/, tables/). Not used by any active workflow.
+
+## outputs/runs/overlap_aware/
+
+Robustness-check counterpart to the headline `outputs/`. Produced by `scripts/run_experiments_overlap_aware.py`, which re-runs the full 270-run matrix after additionally removing every synthetic row whose raw text appears in the manual corpus. Same `figures/`, `metrics/`, `models/`, `tables/` subdirectory layout as headline.
+
+Key numbers (pooled across classifiers): `combined` retains the headline advantage over `manual_only` (+0.050 mean Δ, Cohen's d = 2.17, BH-adjusted p < 10⁻⁴⁰). `synthetic_only` collapses because cross-corpus dedup removes all ham from the synthetic split (100% of synthetic ham is verbatim manual ham); see `outputs/runs/overlap_aware/metrics/train_composition.csv` for the `n_ham = 0` evidence. The `best_model.joblib` in this directory is from the overlap_aware regime and is **not** the deployed model — the demo app uses `outputs/models/best_model.joblib` from the headline run.

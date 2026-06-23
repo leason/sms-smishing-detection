@@ -1,0 +1,14 @@
+{
+  "model_name": "LinearSVC",
+  "training_experiment": "combined",
+  "duplicate_mode": "overlap_aware",
+  "primary_metric": "smishing_f1",
+  "mean_smishing_f1": 0.9351,
+  "mean_macro_f1": 0.9435,
+  "labels": [
+    "ham",
+    "spam",
+    "smishing"
+  ],
+  "trained_at": "2026-06-23T13:12:17.602045+00:00"
+}

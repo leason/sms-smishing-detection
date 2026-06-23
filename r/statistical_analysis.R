@@ -25,9 +25,16 @@ suppressPackageStartupMessages({
   library(effsize)
 })
 
-METRICS_PATH <- "outputs/metrics/all_model_results.csv"
-TABLES_DIR <- "outputs/tables"
-FIGURES_DIR <- "outputs/figures"
+# Defaults point at the headline (drop_exact_duplicates) outputs. Override via
+# env vars to run against an alternate matrix, e.g. the overlap_aware
+# robustness check:
+#   METRICS_PATH=outputs/runs/overlap_aware/metrics/all_model_results.csv \
+#   TABLES_DIR=outputs/runs/overlap_aware/tables \
+#   FIGURES_DIR=outputs/runs/overlap_aware/figures \
+#   Rscript r/statistical_analysis.R
+METRICS_PATH <- Sys.getenv("METRICS_PATH", "outputs/metrics/all_model_results.csv")
+TABLES_DIR <- Sys.getenv("TABLES_DIR", "outputs/tables")
+FIGURES_DIR <- Sys.getenv("FIGURES_DIR", "outputs/figures")
 
 dir.create(TABLES_DIR, showWarnings = FALSE, recursive = TRUE)
 dir.create(FIGURES_DIR, showWarnings = FALSE, recursive = TRUE)

@@ -146,6 +146,32 @@ Mean smishing F1 (std) across 30 seeds:
 
 Mean macro F1 follows the same pattern (LinearSVC combined: 0.949). Full tables in `outputs/tables/model_performance_summary.csv` and `outputs/tables/experiment_performance_summary.csv`.
 
+## Robustness check: cross-corpus overlap removal
+
+To assess whether the headline finding survives a stricter no-overlap condition, the full 270-run matrix was re-run under the `overlap_aware` duplicate-handling mode (within-dataset dedup plus removal of every synthetic row whose raw text appears in the manual corpus). Runner: `scripts/run_experiments_overlap_aware.py`. Outputs land under `outputs/runs/overlap_aware/` so the headline outputs are untouched.
+
+Mean smishing F1 (std) across 30 seeds under `overlap_aware`:
+
+| Model | manual_only | synthetic_only | combined |
+|-------|------------:|---------------:|---------:|
+| Multinomial NB | 0.857 (0.019) | 0.377 (0.011) | 0.896 (0.018) |
+| Logistic Regression | 0.868 (0.023) | 0.859 (0.019) | 0.914 (0.019) |
+| LinearSVC | 0.870 (0.023) | 0.720 (0.028) | **0.935** (0.016) |
+
+Pooled across classifiers, `combined` still beats `manual_only` by +0.050 mean Δ (Cohen's d = 2.17, BH-adjusted p < 10⁻⁴⁰) — the central practical claim is robust to overlap removal.
+
+The `synthetic_only` collapse is a structural artifact rather than a memorization effect: because 100% of the synthetic ham class is verbatim copied from manual, `overlap_aware` removes every ham row from the synthetic training set (`n_ham = 0` in `outputs/runs/overlap_aware/metrics/train_composition.csv`). A classifier trained on only spam + smishing cannot recognise the test set's majority class (~81% ham), which drives `ham_f1 = 0` and accuracy ~17% for all three classifiers under that condition. This finding argues against deploying synthetic-only training in practice while leaving the combined-strategy headline intact.
+
+To re-run:
+
+```bash
+.venv/bin/python -m scripts.run_experiments_overlap_aware
+METRICS_PATH=outputs/runs/overlap_aware/metrics/all_model_results.csv \
+TABLES_DIR=outputs/runs/overlap_aware/tables \
+FIGURES_DIR=outputs/runs/overlap_aware/figures \
+  Rscript r/statistical_analysis.R
+```
+
 ## Notes on framing
 
-This comparison embraces the natural training-data volume produced by each pipeline rather than artificially controlling for size. The cross-dataset text overlap (specifically the 100% ham copy from manual into synthetic) is reported as a structural property of the synthetic corpus in the data-pipeline documentation, and the results are interpreted accordingly: the headline numbers describe practical performance on a holdout of the manual corpus, not generalization to unseen-content distributions. See the README's "Scope of the claim" bullet for details.
+This comparison embraces the natural training-data volume produced by each pipeline rather than artificially controlling for size. The cross-dataset text overlap (specifically the 100% ham copy from manual into synthetic) is reported as a structural property of the synthetic corpus in the data-pipeline documentation, and the results are interpreted accordingly: the headline numbers describe practical performance on a holdout of the manual corpus, not generalization to unseen-content distributions. See the README's "Scope of the claim" bullet for details, and the robustness check above for the overlap-removed counterpart.
