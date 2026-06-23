@@ -90,15 +90,54 @@ The same training matrix is also executable via the notebook:
 jupyter nbconvert --to html --execute notebooks/01_model_training_and_evaluation.ipynb
 ```
 
-### FastAPI demo app
+### FastAPI demo app (Docker)
+
+The demo app serves the deployed model — LinearSVC trained on the `combined` strategy (smishing F1 = 0.939) — behind a small web UI and JSON API.
+
+**Prerequisites**
+
+- Docker Desktop installed and running ([install](https://www.docker.com/products/docker-desktop/))
+- `outputs/models/best_model.joblib` exists. If it does not, generate it first by running the training matrix:
+
+  ```bash
+  .venv/bin/python -m scripts.run_experiments
+  ```
+
+**Build and run**
+
+From the project root (`project/`):
 
 ```bash
 docker compose up --build
 ```
 
-Then open **http://localhost:8000** to classify SMS messages through the web interface. The app loads `outputs/models/best_model.joblib` (LinearSVC + combined, smishing F1 = 0.939) and shows the deployed-model metadata as a footer badge.
+The first build takes ~1–2 minutes (downloading `python:3.11-slim` and installing dependencies). On subsequent runs the cached image starts in seconds.
 
-Stop with `docker compose down`.
+**Use the app**
+
+Open **http://localhost:8000** in a browser. Paste an SMS message into the textarea (or click one of the six sample messages) and submit to see the predicted class (`ham`/`spam`/`smishing`), calibrated probabilities, and detected indicators (URLs, phone numbers, suspicious keywords). A footer badge shows the deployed-model metadata.
+
+**Verify the service is healthy**
+
+```bash
+curl http://localhost:8000/health           # {"status":"ok","model_loaded":true}
+curl http://localhost:8000/api/model        # deployed-model metadata
+curl -X POST http://localhost:8000/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Your account is locked. Verify at http://example.com"}'
+```
+
+**Stop**
+
+```bash
+docker compose down
+```
+
+**Swap in a freshly trained model**
+
+`docker-compose.yml` mounts `./outputs/models` read-only into the container, so re-running the training matrix and then `docker compose restart` picks up a new `best_model.joblib` without rebuilding the image.
+
+See [`documentation/demo-app.md`](documentation/demo-app.md) for endpoint reference, prediction flow, and known quirks.
 
 ## Project Structure
 
