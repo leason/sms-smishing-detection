@@ -1,3 +1,5 @@
+name: sms-detector-demo
+
 services:
   smishing-demo:
     build: .
